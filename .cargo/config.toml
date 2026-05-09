@@ -1,0 +1,8 @@
+[build]
+target = "thumbv6m-none-eabi"
+# `CARGO_TARGET_DIR` が無いときは常にリポジトリ直下の target/（ELF の場所がわかりやすい）。
+target-dir = "target"
+
+[target.thumbv6m-none-eabi]
+runner = "elf2uf2-rs -d"
+rustflags = ["-C", "link-arg=--nmagic", "-C", "link-arg=-Tlink.x"]

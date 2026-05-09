@@ -1,0 +1,20 @@
+[package]
+name = "iotlt_flag_servo"
+version = "0.1.0"
+edition = "2021"
+authors = ["IoTLT workshop"]
+license = "MIT OR Apache-2.0"
+description = "Seeed XIAO RP2040: potentiometer → servo + LED PWM (IoTLT hands-on)"
+
+[dependencies]
+cortex-m = "0.7"
+cortex-m-rt = { version = "0.7", features = ["device"] }
+embedded-hal = "1.0"
+embedded-hal-02 = { package = "embedded-hal", version = "0.2.7" }
+panic-halt = "0.2"
+seeeduino-xiao-rp2040 = { version = "0.6", features = [
+    "boot2",
+    "rt",
+    "critical-section-impl",
+    "rom-func-cache",
+] }

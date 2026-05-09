@@ -1,0 +1,24 @@
+{
+  "name": "IoTLT XIAO RP2040 Rust",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        "rust-analyzer.cargo.target": "thumbv6m-none-eabi",
+        "rust-analyzer.checkOnSave.allTargets": false,
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "postCreateCommand": "cargo build",
+  "remoteUser": "vscode"
+}
