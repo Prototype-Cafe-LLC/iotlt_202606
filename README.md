@@ -6,7 +6,7 @@
 
 ## 配線図
 
-
+<img src="doc/wire.svg" alt="配線" />
 
 ## 使い方
 
