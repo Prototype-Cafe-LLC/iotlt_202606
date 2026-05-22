@@ -1,8 +1,20 @@
-# RP2040
+# Rust × AIでサーボを動かそう！ RP2040ハンズオン
 
-[Seeed Studio XIAO RP2040 の Wiki](https://wiki.seeedstudio.com/XIAO-RP2040/)
+参考: [Seeed Studio XIAO RP2040 の Wiki](https://wiki.seeedstudio.com/XIAO-RP2040/)
 
-## 使い方（日本語）
+## 配線図
+
+<p align="center">
+  <img src="docs/seed_xiao_rp2040.png" alt="Seeed Studio XIAO RP2040" width="500"/>
+  <img src="docs/wire.svg" alt="配線図" widtgh="500" />
+</p>
+
+
+- **共通 GND**: サーボの茶線とボリュームの端子3は、両方とも XIAO の **GND ピン**（共通レール）にまとめる。GPIO を GND 代わりに使わない。
+- **LED 調光**（GPIO17 / USER_LED_R）は基板実装の LED なので外部配線は不要。
+- ピン割り当て・線色の詳細は [`AGENTS.md`](AGENTS.md) を参照。
+
+## 使い方
 
 ### 前提
 
