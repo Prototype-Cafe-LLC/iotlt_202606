@@ -1,5 +1,9 @@
 # Rust × AIでサーボを動かそう！ RP2040ハンズオン
 
+## 機能
+
+ボリュームつまみの位置に合わせ、1) R(赤)LED光量 2) サーボモータの回転角 が変わります
+
 ## 配線図
 
 
@@ -57,3 +61,10 @@ docker run --rm -v "$PWD":/workspace -w /workspace iotlt-build \
 - Rust 向け BSP: [seeeduino-xiao-rp2040（docs.rs）](https://docs.rs/seeeduino-xiao-rp2040/)
 - [Docker Documentation](https://docs.docker.com/)
 
+
+###　他には？
+
+- LEDは、R, G, B 3色の各USER_LEDと [フルカラーLED(NeoPixel WS2812)](https://akizukidenshi.com/goodsaffix/WS2812B_20200225.pdf)一つがあり、自由に使用することができます。
+- 起動しているかどうかわかりにくいので、起動時にLEDを点滅するとかすればいいかも。
+- 今は R LEDの輝度調節しているだけですが、フルカラーLEDを使うと色々できます。
+- Rustの他、C言語、micro python が利用可能です
