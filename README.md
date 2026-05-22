@@ -10,32 +10,17 @@
   <img src="docs/wire.svg" alt="配線図" widtgh="500" />
 </p>
 
-## 使い方
-
-開発（コード編集）は**ホスト上で普通に行い**、**ビルドだけを Docker で**行う。
-Dev Container は使わなくてよい（必要なら `.devcontainer/` はそのまま残してある）。
-
-ビルド成果物の `.uf2` ファイルは **OS に依存しない**ので、コンテナ内で作った `.uf2` を
-ホストの `RPI-RP2` ドライブにコピーすれば、macOS / Linux / Windows のどれでも書き込める。
-
-### 前提
-
-- [Docker](https://docs.docker.com/get-docker/) が使えること（Docker Desktop / Docker Engine いずれでも可）。
-- このリポジトリのルートで作業する。
-
 ### 1. ビルド用イメージを作る（最初の一度だけ）
 
-`.devcontainer/Dockerfile` をそのままビルドイメージとして使う。Rust ツールチェイン・
-`thumbv6m-none-eabi` ターゲット・`elf2uf2-rs` が入る。
+`.devcontainer/Dockerfile` をそのままビルドイメージとして使う。Rust ツールチェイン・`thumbv6m-none-eabi` ターゲット・`elf2uf2-rs` が入る。
 
 ```bash
 docker build -t iotlt-build -f .devcontainer/Dockerfile .
 ```
 
-### 2. UF2 をビルドする
+### 2. ファームウェア をビルドする
 
-カレントディレクトリ（リポジトリ）を `/workspace` にマウントしてコンテナ内でビルドし、
-`elf2uf2-rs` で UF2 に変換する。`**-d` は付けない**（コンテナからホストの USB ドライブは見えないため）。
+カレントディレクトリ（リポジトリ）を `/workspace` にマウントしてコンテナ内でビルドし、`elf2uf2-rs` で UF2形式ファームウェア に変換する。
 
 ```bash
 docker run --rm -v "$PWD":/workspace -w /workspace iotlt-build \
@@ -43,12 +28,7 @@ docker run --rm -v "$PWD":/workspace -w /workspace iotlt-build \
     elf2uf2-rs target/thumbv6m-none-eabi/release/iotlt_flag_servo iotlt_flag_servo.uf2"
 ```
 
-完了すると、リポジトリ直下（ホスト側）に `**iotlt_flag_servo.uf2**` が出来る。
-
-> **Linux で成果物の所有者がずれるとき**: コンテナ内ユーザー（`vscode`, uid 1000）でファイルが
-> 作られる。ホストの uid が 1000 以外だと `target/` や `.uf2` の所有者が合わないことがある。
-> 気になる場合は `sudo chown -R "$(id -u):$(id -g)" target iotlt_flag_servo.uf2` で直す。
-> macOS / Windows の Docker Desktop では自動でホストユーザー所有になるため通常は不要。
+完了すると、リポジトリ直下（ホスト側）に `**iotlt_flag_servo.uf2**` ができます。
 
 ### 3. ファームウェアの書き込み（UF2）
 
