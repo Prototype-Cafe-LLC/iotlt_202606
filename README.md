@@ -5,7 +5,6 @@
 ## 配線図
 
 <p align="center">
-  <img src="docs/seed_xiao_rp2040.png" alt="Seeed Studio XIAO RP2040" width="500"/>
   <img src="docs/wire.svg" alt="配線図" widtgh="500" />
 </p>
 
