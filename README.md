@@ -44,7 +44,7 @@ docker run --rm -v "$PWD":/workspace -w /workspace iotlt-build \
 - [Docker Documentation](https://docs.docker.com/)
 
 
-###　他には？
+### 他には？
 
 - LEDは、R, G, B 3色の各USER_LEDと [フルカラーLED(NeoPixel WS2812)](https://akizukidenshi.com/goodsaffix/WS2812B_20200225.pdf)一つがあり、自由に使用することができます。
 - 起動しているかどうかわかりにくいので、起動時にLEDを点滅するとかすればいいかも。
