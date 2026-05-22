@@ -1,106 +1,59 @@
 # Rust × AIでサーボを動かそう！ RP2040ハンズオン
 
-参考: [Seeed Studio XIAO RP2040 の Wiki](https://wiki.seeedstudio.com/XIAO-RP2040/)
-
 ## 配線図
 
-<p align="center">
-  <img src="docs/wire.svg" alt="配線図" widtgh="500" />
-</p>
 
-
-- **共通 GND**: サーボの茶線とボリュームの端子3は、両方とも XIAO の **GND ピン**（共通レール）にまとめる。GPIO を GND 代わりに使わない。
-- **LED 調光**（GPIO17 / USER_LED_R）は基板実装の LED なので外部配線は不要。
-- ピン割り当て・線色の詳細は [`AGENTS.md`](AGENTS.md) を参照。
 
 ## 使い方
 
+開発（コード編集）は**ホスト上で普通に行い**、**ビルドだけを Docker で**行う。
+Dev Container は使わなくてよい（必要なら `.devcontainer/` はそのまま残してある）。
+
+ビルド成果物の `.uf2` ファイルは **OS に依存しない**ので、コンテナ内で作った `.uf2` を
+ホストの `RPI-RP2` ドライブにコピーすれば、macOS / Linux / Windows のどれでも書き込める。
+
 ### 前提
 
-- 配線・ピン割り当てはリポジトリ内の `AGENTS.md` を参照する。
-- 本リポジトリは **Dev Container（Docker）** で Rust ツールチェーンと `thumbv6m-none-eabi` ターゲットを揃える想定である。
-- ファームウェアのピン割り当て（要約）: サーボ **D4 / GPIO6**、ツマミ **D0 / GPIO26**、赤 LED は
-  基板 **USER_LED_R / GPIO17**（PWM キャリア約 **1 kHz**）。**I2C は使用しない**。
+- [Docker](https://docs.docker.com/get-docker/) が使えること（Docker Desktop / Docker Engine いずれでも可）。
+- このリポジトリのルートで作業する。
 
-### Dev Container で開発する
+### 1. ビルド用イメージを作る（最初の一度だけ）
 
-1. [Dev Containers](https://containers.dev/) 拡張機能が使えるエディタ（VS Code / Cursor など）でこのフォルダを開く。
-2. コマンドパレットから **「Dev Containers: Reopen in Container」**（コンテナーで再度開く）を実行する。
-3. コンテナ作成後に `postCreateCommand` で `cargo build` が走る。手元でビルドする場合はコンテナ内のターミナルで次を実行する。
+`.devcontainer/Dockerfile` をそのままビルドイメージとして使う。Rust ツールチェイン・
+`thumbv6m-none-eabi` ターゲット・`elf2uf2-rs` が入る。
 
-   ```bash
-   cargo build
-   ```
+```bash
+docker build -t iotlt-build -f .devcontainer/Dockerfile .
+```
 
-4. **`/workspace` にファイルが無い**ように見えるときは、エクスプローラーで開いているパスがコンテナ内の
-   `/workspace` か確認する。それでも空ならコマンドパレットから **「Dev Containers: Rebuild
-   Container」** で再ビルドする（設定の `workspaceMount` が反映される）。ホスト側では必ず
-   **このリポジトリのルート**をフォルダとして開くこと。
+### 2. UF2 をビルドする
 
-### Dev Container 内では `elf2uf2-rs -d` が使えない
+カレントディレクトリ（リポジトリ）を `/workspace` にマウントしてコンテナ内でビルドし、
+`elf2uf2-rs` で UF2 に変換する。`**-d` は付けない**（コンテナからホストの USB ドライブは見えないため）。
 
-コンテナの中からは、Mac / Docker Desktop などでは **ホストに出ている BOOTSEL 用 USB
-ストレージ（`RPI-RP2`）が見えない**ことがほとんどです。  
-そのため **`Unable to find mounted pico`** は、**想定どおりの失敗**（`-d` がドライブを
-見つけられない）です。Docker まわりの説明は [Docker
-Documentation](https://docs.docker.com/desktop/) を参照。
+```bash
+docker run --rm -v "$PWD":/workspace -w /workspace iotlt-build \
+  bash -c "cargo build --release && \
+    elf2uf2-rs target/thumbv6m-none-eabi/release/iotlt_flag_servo iotlt_flag_servo.uf2"
+```
 
-#### 推奨手順（ビルドはコンテナ、書き込みはホスト）
+完了すると、リポジトリ直下（ホスト側）に `**iotlt_flag_servo.uf2**` が出来る。
 
-1. コンテナ内のターミナルで **UF2 ファイルだけ**作る（**`-d` は付けない**）。
+> **Linux で成果物の所有者がずれるとき**: コンテナ内ユーザー（`vscode`, uid 1000）でファイルが
+> 作られる。ホストの uid が 1000 以外だと `target/` や `.uf2` の所有者が合わないことがある。
+> 気になる場合は `sudo chown -R "$(id -u):$(id -g)" target iotlt_flag_servo.uf2` で直す。
+> macOS / Windows の Docker Desktop では自動でホストユーザー所有になるため通常は不要。
 
-   ```bash
-   cargo build --release
-   elf2uf2-rs target/thumbv6m-none-eabi/release/iotlt_flag_servo iotlt_flag_servo.uf2
-   ```
+### 3. ファームウェアの書き込み（UF2）
 
-2. `iotlt_flag_servo.uf2` は `/workspace` 経由で **ホストのプロジェクトフォルダ**にも出る。
-   **Finder** でそのファイルを **`RPI-RP2` にドラッグ＆ドロップ**する（または **ホストの**
-   ターミナルで `cp` する）。
-
-`cargo run` / `cargo run --release` は `.cargo/config.toml` で  
-`runner` が `elf2uf2-rs -d` のため、コンテナ内では書き込みまで行かない。  
-**ビルドだけ**なら `cargo build` を使う。
-
-### ファームウェアの書き込み（UF2）
-
-1. XIAO RP2040 の **BOOT(B)** ボタンを押しながら USB で PC に接続し、USB ストレージ（多くの場合
-   **`RPI-RP2`**）として認識させる。USBコネクタ横の赤とRGBのLEDが全部点灯すれば成功です。(点滅している場合は、やり直してください)
-2. ビルドしてから UF2 を書き込む。**Dev Container 内では上記「`-d` が使えない」節の手順**を使う。
-
-   **`elf2uf2-rs -d` が使えない環境**（コンテナ内、Cursor 内の一部環境など）では、`-d` は RP2040 用
-   ボリュームを見つけられない。**方法 B** か、**ホストの通常ターミナル**で `-d` または `cp` を使う。
-
-   **方法 A: 自動デプロイ（ホストで USB ストレージが見えるときだけ）**
-
-   ```bash
-   cargo build --release
-   elf2uf2-rs target/thumbv6m-none-eabi/release/iotlt_flag_servo -d
-   ```
-
-   または `cargo run --release`（runner が同じく `elf2uf2-rs -d`）。
-
-   **方法 B: UF2 をファイルに出してからコピー（確実・待たない）**
-
-   ボリューム名は Finder やホストで `ls /Volumes` して確認する（例: `RPI-RP2`）。  
-   **`cp` はホストのターミナルで実行する**（コンテナ内の `/Volumes` は Mac のドライブと別）。
-
-   ```bash
-   cargo build --release
-   elf2uf2-rs target/thumbv6m-none-eabi/release/iotlt_flag_servo iotlt_flag_servo.uf2
-   cp iotlt_flag_servo.uf2 /Volumes/RPI-RP2/
-   ```
-
-   書き込みが終わるとドライブが自動でマウント解除されることが多い。
-
-### macOS で Docker を使う場合の注意
-
-Docker Desktop 経由では **ホストの USB デバイスにコンテナからアクセスできない** ことが多い。その場合は次のいずれかになる。
-
-- ホスト（macOS）側に `elf2uf2-rs` を入れ、ビルド成果物（ELF または生成した UF2）をホストで書き込む。
-- または Linux 実機 / WSL2 など、USB パススルーが成立する環境でコンテナを使う。
+1. PCとRP2040をUSB接続
+2. XIAO RP2040 の **BOOT(B)** ボタンを押しながら RESET(B) ボタンを押す。USB コネクタ横の赤と RGB の LED が全部点灯すれば成功（点滅している場合はやり直す）。
+3. 手順 2 で出来た `iotlt_flag_servo.uf2` を `**RPI-RP2` ドライブにコピー**する。
+  コピーが終わるとドライブが自動的にマウント解除され、書き込み完了し、書き込んだプログラムが起動します。
 
 ### ドキュメント・リンク
 
-- ボード情報: [XIAO RP2040 Wiki](https://wiki.seeedstudio.com/XIAO-RP2040/)
+- [Seeed Studio XIAO RP2040 の Wiki](https://wiki.seeedstudio.com/XIAO-RP2040/)
 - Rust 向け BSP: [seeeduino-xiao-rp2040（docs.rs）](https://docs.rs/seeeduino-xiao-rp2040/)
+- [Docker Documentation](https://docs.docker.com/)
+
